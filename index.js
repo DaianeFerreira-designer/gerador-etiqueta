@@ -120,8 +120,13 @@ async function processarSeparacoes() {
         if (detalhesSeparacao && detalhesSeparacao.itens && detalhesSeparacao.itens.length > 0) {
             detalhesSeparacao.itens.forEach(item => {
                 console.log('Item encontrado:', item); // Log do item encontrado
+                const quantidade = item.quantidade; // Obter a quantidade do item
                 const nota = criarEtiqueta(nomeCliente, item.codigo); // Usar SKU como código
-                todasNotas.push(nota); // Adicionar a nota à lista
+                
+                // Adicionar a nota à lista de acordo com a quantidade
+                for (let i = 0; i < quantidade; i++) {
+                    todasNotas.push(nota);
+                }
             });
         } else {
             console.log('A separação não contém itens ou não foi encontrada:', separacao);
