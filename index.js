@@ -8,7 +8,7 @@ require('dotenv').config();
 function criarEtiqueta(nomeCliente, sku) {
     let conteudo;
     if (['SB012', 'SB013', 'SB014'].includes(sku)) {
-        conteudo = `Nome: ${nomeCliente}
+        conteudo = `NOME: ${nomeCliente}
         TOMAR 2 CAPS ao dia - 1 branca e 1 azul
         USO: INTERNO F.S.A: 90 CAPS
         FAB: 08/2024 VAL: 24 MESES
@@ -16,7 +16,7 @@ function criarEtiqueta(nomeCliente, sku) {
         CRM-MA: 4953/CRM-TO 2039
         PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     } else if (['SB001', 'SB021', 'SB022'].includes(sku)) {
-        conteudo = `Nome: ${nomeCliente}
+        conteudo = `NOME: ${nomeCliente}
         TOMAR 6 CAPS POR DIA
         USO: INTERNO F.S.A: 180 CAPS
         FAB: 08/2024 VAL: 24 MESES
@@ -24,7 +24,7 @@ function criarEtiqueta(nomeCliente, sku) {
         CRM-MA: 4953/CRM-TO 2039
         PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     } else if (['SB002', 'SB010', 'SB011', 'SB015', 'SB016', 'SB019', 'SB009'].includes(sku)) {
-        conteudo = `Nome: ${nomeCliente}
+        conteudo = `NOME: ${nomeCliente}
         TOMAR 2 CAPS POR DIA
         USO: INTERNO F.S.A: 60 CAPS
         FAB: 08/2024 VAL: 24 MESES
@@ -32,7 +32,7 @@ function criarEtiqueta(nomeCliente, sku) {
         CRM-MA: 4953/CRM-TO 2039
         PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     } else if (['SB003', 'SB006', 'SB007', 'SB008', 'SB017', 'SB018', 'SB020'].includes(sku)) {
-        conteudo = `Nome: ${nomeCliente}
+        conteudo = `NOME: ${nomeCliente}
         TOMAR 2 CAPS POR DIA
         USO: INTERNO F.S.A: 120 CAPS
         FAB: 08/2024 VAL: 24 MESES
@@ -51,9 +51,31 @@ function gerarPDF(notas) {
     doc.pipe(fs.createWriteStream(pdfPath));
     console.log(`Gerando PDF: ${pdfPath}`);
 
+    // Configurações de layout
+    const etiquetaWidth = 250; // Largura de cada etiqueta
+    const etiquetaHeight = 150; // Altura de cada etiqueta
+    const margin = 20; // Margem entre etiquetas
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+
+    let x = margin;
+    let y = margin;
+
     notas.forEach((nota, index) => {
-        if (index > 0) doc.addPage();
-        doc.fontSize(12).text(nota, { align: 'left' });
+        if (x + etiquetaWidth + margin > pageWidth) {
+            x = margin;
+            y += etiquetaHeight + margin;
+            if (y + etiquetaHeight + margin > pageHeight) {
+                doc.addPage();
+                x = margin;
+                y = margin;
+            }
+        }
+        
+        doc.rect(x, y, etiquetaWidth, etiquetaHeight).stroke();
+        doc.fontSize(12).text(nota, x + 10, y + 10, { width: etiquetaWidth - 20, height: etiquetaHeight - 20, align: 'left' });
+
+        x += etiquetaWidth + margin;
     });
 
     doc.end();
