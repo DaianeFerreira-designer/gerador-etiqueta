@@ -9,41 +9,41 @@ function criarEtiqueta(nomeCliente, sku) {
     let conteudo;
     if (['SB012', 'SB013', 'SB014'].includes(sku)) {
         conteudo = `NOME: ${nomeCliente}
-        TOMAR 2 CAPS ao dia - 1 branca e 1 azul
-        USO: INTERNO F.S.A: 90 CAPS
-        FAB: 08/2024 VAL: 24 MESES
-        DR. ROMULO CRUZ
-        CRM-MA: 4953/CRM-TO 2039
-        PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
+TOMAR 2 CAPS ao dia - 1 branca e 1 azul
+USO: INTERNO F.S.A: 90 CAPS
+FAB: 08/2024 VAL: 24 MESES
+DR. ROMULO CRUZ
+CRM-MA: 4953/CRM-TO 2039
+PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     } else if (['SB001', 'SB021', 'SB022'].includes(sku)) {
         conteudo = `NOME: ${nomeCliente}
-        TOMAR 6 CAPS POR DIA
-        USO: INTERNO F.S.A: 180 CAPS
-        FAB: 08/2024 VAL: 24 MESES
-        DR. ROMULO CRUZ
-        CRM-MA: 4953/CRM-TO 2039
-        PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
+TOMAR 6 CAPS POR DIA
+USO: INTERNO F.S.A: 180 CAPS
+FAB: 08/2024 VAL: 24 MESES
+DR. ROMULO CRUZ
+CRM-MA: 4953/CRM-TO 2039
+PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     } else if (['SB002', 'SB010', 'SB011', 'SB015', 'SB016', 'SB019', 'SB009'].includes(sku)) {
         conteudo = `NOME: ${nomeCliente}
-        TOMAR 2 CAPS POR DIA
-        USO: INTERNO F.S.A: 60 CAPS
-        FAB: 08/2024 VAL: 24 MESES
-        DR. ROMULO CRUZ
-        CRM-MA: 4953/CRM-TO 2039
-        PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
+TOMAR 2 CAPS POR DIA
+USO: INTERNO F.S.A: 60 CAPS
+FAB: 08/2024 VAL: 24 MESES
+DR. ROMULO CRUZ
+CRM-MA: 4953/CRM-TO 2039
+PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     } else if (['SB003', 'SB006', 'SB007', 'SB008', 'SB017', 'SB018', 'SB020'].includes(sku)) {
         conteudo = `NOME: ${nomeCliente}
-        TOMAR 2 CAPS POR DIA
-        USO: INTERNO F.S.A: 120 CAPS
-        FAB: 08/2024 VAL: 24 MESES
-        DR. ROMULO CRUZ
-        CRM-MA: 4953/CRM-TO 2039
-        PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
+TOMAR 2 CAPS POR DIA
+USO: INTERNO F.S.A: 120 CAPS
+FAB: 08/2024 VAL: 24 MESES
+DR. ROMULO CRUZ
+CRM-MA: 4953/CRM-TO 2039
+PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     }
     return conteudo;
 }
 
-// Função para gerar PDF com etiquetas
+// Função para gerar PDF com etiquetas em duas colunas
 function gerarPDF(notas) {
     const doc = new PDFDocument();
     const pdfPath = 'etiquetas.pdf'; // Caminho do arquivo PDF
@@ -51,31 +51,31 @@ function gerarPDF(notas) {
     doc.pipe(fs.createWriteStream(pdfPath));
     console.log(`Gerando PDF: ${pdfPath}`);
 
-    // Configurações de layout
-    const etiquetaWidth = 250; // Largura de cada etiqueta
-    const etiquetaHeight = 150; // Altura de cada etiqueta
-    const margin = 20; // Margem entre etiquetas
-    const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
+    const margin = 50; // Margem da página
+    const labelWidth = (doc.page.width - 3 * margin) / 2; // Largura de cada etiqueta (metade da largura da página menos as margens)
+    const labelHeight = 100; // Altura de cada etiqueta
+    const maxLabelsPerPage = 12; // Máximo de etiquetas por página (6 por coluna)
 
-    let x = margin;
-    let y = margin;
+    let x = margin, y = margin;
 
     notas.forEach((nota, index) => {
-        if (x + etiquetaWidth + margin > pageWidth) {
+        if (index > 0 && index % maxLabelsPerPage === 0) {
+            doc.addPage();
             x = margin;
-            y += etiquetaHeight + margin;
-            if (y + etiquetaHeight + margin > pageHeight) {
-                doc.addPage();
-                x = margin;
-                y = margin;
-            }
+            y = margin;
+        } else if (index > 0 && index % (maxLabelsPerPage / 2) === 0) {
+            x = margin + labelWidth + margin;
+            y = margin;
         }
-        
-        doc.rect(x, y, etiquetaWidth, etiquetaHeight).stroke();
-        doc.fontSize(12).text(nota, x + 10, y + 10, { width: etiquetaWidth - 20, height: etiquetaHeight - 20, align: 'left' });
 
-        x += etiquetaWidth + margin;
+        doc.rect(x, y, labelWidth, labelHeight).stroke();
+        doc.fontSize(12).text(nota, x + 5, y + 5, {
+            width: labelWidth - 10,
+            height: labelHeight - 10,
+            align: 'left'
+        });
+
+        y += labelHeight + margin;
     });
 
     doc.end();
