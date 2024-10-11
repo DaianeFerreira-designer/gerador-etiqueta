@@ -43,7 +43,7 @@ PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     return conteudo;
 }
 
-// Função para gerar PDF com etiquetas em duas colunas
+// Função para gerar PDF com etiquetas
 function gerarPDF(notas) {
     const doc = new PDFDocument();
     const pdfPath = 'etiquetas.pdf'; // Caminho do arquivo PDF
@@ -51,31 +51,39 @@ function gerarPDF(notas) {
     doc.pipe(fs.createWriteStream(pdfPath));
     console.log(`Gerando PDF: ${pdfPath}`);
 
-    const margin = 50; // Margem da página
-    const labelWidth = (doc.page.width - 3 * margin) / 2; // Largura de cada etiqueta (metade da largura da página menos as margens)
-    const labelHeight = 100; // Altura de cada etiqueta
-    const maxLabelsPerPage = 12; // Máximo de etiquetas por página (6 por coluna)
+    // Configurações de layout
+    const etiquetaWidth = 250; // Largura de cada etiqueta
+    const etiquetaHeight = 150; // Altura de cada etiqueta
+    const margin = 20; // Margem entre etiquetas
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
 
-    let x = margin, y = margin;
+    let x = margin;
+    let y = margin;
 
     notas.forEach((nota, index) => {
-        if (index > 0 && index % maxLabelsPerPage === 0) {
-            doc.addPage();
+        if (x + etiquetaWidth + margin > pageWidth) {
             x = margin;
-            y = margin;
-        } else if (index > 0 && index % (maxLabelsPerPage / 2) === 0) {
-            x = margin + labelWidth + margin;
-            y = margin;
+            y += etiquetaHeight + margin;
+            if (y + etiquetaHeight + margin > pageHeight) {
+                doc.addPage();
+                y = margin; // Reseta a posição y
+            }
         }
 
-        doc.rect(x, y, labelWidth, labelHeight).stroke();
-        doc.fontSize(12).text(nota, x + 5, y + 5, {
-            width: labelWidth - 10,
-            height: labelHeight - 10,
-            align: 'left'
-        });
+        // Verifica se a nota é válida antes de tentar dividir
+        if (nota) {
+            doc.rect(x, y, etiquetaWidth, etiquetaHeight).stroke();
 
-        y += labelHeight + margin;
+            const lines = nota.split('\n'); // Divide o conteúdo da etiqueta em linhas
+            lines.forEach((line, lineIndex) => {
+                doc.fontSize(10).text(line.trim(), x + 10, y + 10 + lineIndex * 15, { width: etiquetaWidth - 20, align: 'left' });
+            });
+        } else {
+            console.error('Nota inválida:', nota); // Log de nota inválida
+        }
+
+        x += etiquetaWidth + margin; // Move para a próxima coluna
     });
 
     doc.end();
@@ -86,11 +94,9 @@ function gerarPDF(notas) {
 async function buscarSeparacoes() {
     const token = process.env.TINY_API_TOKEN; // Obtendo o token do arquivo .env
     try {
-        // Ajustar a URL para buscar separações (situacao=2 para pedidos separados)
         const response = await axios.get(`https://api.tiny.com.br/api2/separacao.pesquisa.php?token=${token}&situacao=2&formato=json`);
         console.log('Resposta da API buscar separações:', response.data); // Log da resposta da API
 
-        // Verificar se a estrutura da resposta é válida
         if (response.data && response.data.retorno && response.data.retorno.separacoes) {
             return response.data.retorno.separacoes;
         } else {
