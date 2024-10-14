@@ -1,4 +1,4 @@
-// Carregar módulos necessários
+// Carregar módulos necessários 
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const axios = require('axios');
@@ -45,45 +45,44 @@ PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
 
 // Função para gerar PDF com etiquetas
 function gerarPDF(notas) {
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ size: [1197, 297] }); // Define o tamanho da página
     const pdfPath = 'etiquetas.pdf'; // Caminho do arquivo PDF
 
     doc.pipe(fs.createWriteStream(pdfPath));
     console.log(`Gerando PDF: ${pdfPath}`);
 
     // Configurações de layout
-    const etiquetaWidth = 250; // Largura de cada etiqueta
-    const etiquetaHeight = 150; // Altura de cada etiqueta
-    const margin = 20; // Margem entre etiquetas
-    const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
+    const etiquetaWidth = 595; // Largura de cada etiqueta (1/2 da largura da página)
+    const etiquetaHeight = 297; // Altura da etiqueta (altura total da página)
+    const marginTop = 9; // Margem superior
+    const marginBottom = 13; // Margem inferior
+    const marginLateral = 2; // Margens laterais
 
-    let x = margin;
-    let y = margin;
+    let x = 0; // Posição x inicial
+    let y = marginTop; // Posição y inicial
 
     notas.forEach((nota, index) => {
-        if (x + etiquetaWidth + margin > pageWidth) {
-            x = margin;
-            y += etiquetaHeight + margin;
-            if (y + etiquetaHeight + margin > pageHeight) {
-                doc.addPage();
-                y = margin; // Reseta a posição y
-            }
+        // Se chegarmos ao final da página, adicionamos uma nova página
+        if (index > 0 && index % 2 === 0) {
+            doc.addPage();
+            y = marginTop; // Reseta a posição y
+            x = 0; // Reseta a posição x
         }
 
-        // Verifica se a nota é válida antes de tentar dividir
-        if (nota) {
-            doc.rect(x, y, etiquetaWidth, etiquetaHeight).stroke();
+        // Desenha a etiqueta
+        doc.fontSize(20).text(nota, x + marginLateral, y, {
+            width: etiquetaWidth - (2 * marginLateral), 
+            align: 'left'
+        });
 
-            const lines = nota.split('\n'); // Divide o conteúdo da etiqueta em linhas
-            lines.forEach((line, lineIndex) => {
-                doc.fontSize(10).text(line.trim(), x + 10, y + 10 + lineIndex * 15, { width: etiquetaWidth - 20, align: 'left' });
-            });
-        } else {
-            console.error('Nota inválida:', nota); // Log de nota inválida
+        // Avança a posição x para a próxima etiqueta
+        x += etiquetaWidth; // Move para a próxima coluna
+
+        // Se chegamos à segunda etiqueta na linha, reseta a posição x e avança a posição y
+        if (index % 2 === 1) {
+            x = 0; // Reseta a posição x
+            y += etiquetaHeight; // Move para baixo para a próxima linha de etiquetas
         }
-
-        x += etiquetaWidth + margin; // Move para a próxima coluna
     });
 
     doc.end();
@@ -94,9 +93,11 @@ function gerarPDF(notas) {
 async function buscarSeparacoes() {
     const token = process.env.TINY_API_TOKEN; // Obtendo o token do arquivo .env
     try {
+        // Ajustar a URL para buscar separações (situacao=2 para pedidos separados)
         const response = await axios.get(`https://api.tiny.com.br/api2/separacao.pesquisa.php?token=${token}&situacao=2&formato=json`);
         console.log('Resposta da API buscar separações:', response.data); // Log da resposta da API
 
+        // Verificar se a estrutura da resposta é válida
         if (response.data && response.data.retorno && response.data.retorno.separacoes) {
             return response.data.retorno.separacoes;
         } else {
@@ -150,7 +151,7 @@ async function processarSeparacoes() {
                 console.log('Item encontrado:', item); // Log do item encontrado
                 const quantidade = item.quantidade; // Obter a quantidade do item
                 const nota = criarEtiqueta(nomeCliente, item.codigo); // Usar SKU como código
-                
+
                 // Adicionar a nota à lista de acordo com a quantidade
                 for (let i = 0; i < quantidade; i++) {
                     todasNotas.push(nota);
