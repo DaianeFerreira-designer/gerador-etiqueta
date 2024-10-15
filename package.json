@@ -4,12 +4,12 @@
     "description": "Projeto para gerar etiquetas usando a API do Tiny ERP",
     "main": "index.js",
     "scripts": {
-      "start": "node index.js"
+        "start": "node index.js"
     },
     "dependencies": {
-      "pdfkit": "^0.12.1",
-      "axios": "^1.2.0",
-      "dotenv": "^16.0.3"
+        "axios": "^1.7.7",
+        "docx": "^9.0.2",
+        "dotenv": "^16.4.5",
+        "pdfkit": "^0.12.3"
     }
-  }
-  
+}

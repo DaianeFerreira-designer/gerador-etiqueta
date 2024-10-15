@@ -1,8 +1,9 @@
-// Carregar módulos necessários 
+// Carregar módulos necessários
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const axios = require('axios');
 require('dotenv').config();
+
 
 // Função para criar etiquetas
 function criarEtiqueta(nomeCliente, sku) {
@@ -43,40 +44,42 @@ PRODUZIDO POR CNPJ: 12.185.547/0001-98`;
     return conteudo;
 }
 
+
 // Função para gerar PDF com etiquetas
 function gerarPDF(notas) {
     const doc = new PDFDocument({ size: [1197, 297] }); // Define o tamanho da página
     const pdfPath = 'etiquetas.pdf'; // Caminho do arquivo PDF
 
+
     doc.pipe(fs.createWriteStream(pdfPath));
     console.log(`Gerando PDF: ${pdfPath}`);
+
 
     // Configurações de layout
     const etiquetaWidth = 595; // Largura de cada etiqueta (1/2 da largura da página)
     const etiquetaHeight = 297; // Altura da etiqueta (altura total da página)
-    const marginTop = 9; // Margem superior
-    const marginBottom = 13; // Margem inferior
-    const marginLateral = 2; // Margens laterais
-
+    const margin = 20; // Margem entre as etiquetas
+    const xOffset = 10; // Alinhamento à esquerda
     let x = 0; // Posição x inicial
-    let y = marginTop; // Posição y inicial
+    let y = 0; // Posição y inicial
+
 
     notas.forEach((nota, index) => {
         // Se chegarmos ao final da página, adicionamos uma nova página
         if (index > 0 && index % 2 === 0) {
             doc.addPage();
-            y = marginTop; // Reseta a posição y
+            y = 0; // Reseta a posição y
             x = 0; // Reseta a posição x
         }
 
+
         // Desenha a etiqueta
-        doc.fontSize(20).text(nota, x + marginLateral, y, {
-            width: etiquetaWidth - (2 * marginLateral), 
-            align: 'left'
-        });
+        doc.fontSize(7).text(nota, x + xOffset, y + margin, { width: etiquetaWidth - (2 * xOffset), align: 'left' });
+
 
         // Avança a posição x para a próxima etiqueta
         x += etiquetaWidth; // Move para a próxima coluna
+
 
         // Se chegamos à segunda etiqueta na linha, reseta a posição x e avança a posição y
         if (index % 2 === 1) {
@@ -85,9 +88,11 @@ function gerarPDF(notas) {
         }
     });
 
+
     doc.end();
     console.log(`PDF gerado com sucesso: ${pdfPath}`);
 }
+
 
 // Função para buscar separações no Tiny ERP
 async function buscarSeparacoes() {
@@ -96,6 +101,7 @@ async function buscarSeparacoes() {
         // Ajustar a URL para buscar separações (situacao=2 para pedidos separados)
         const response = await axios.get(`https://api.tiny.com.br/api2/separacao.pesquisa.php?token=${token}&situacao=2&formato=json`);
         console.log('Resposta da API buscar separações:', response.data); // Log da resposta da API
+
 
         // Verificar se a estrutura da resposta é válida
         if (response.data && response.data.retorno && response.data.retorno.separacoes) {
@@ -110,12 +116,14 @@ async function buscarSeparacoes() {
     }
 }
 
+
 // Função para obter detalhes da separação pelo ID
 async function obterDetalhesSeparacao(idSeparacao) {
     const token = process.env.TINY_API_TOKEN; // Obtendo o token do arquivo .env
     try {
         const response = await axios.get(`https://api.tiny.com.br/api2/separacao.obter.php?token=${token}&idSeparacao=${idSeparacao}&formato=json`);
         console.log('Resposta da API obter detalhes da separação:', response.data); // Log da resposta da API
+
 
         if (response.data && response.data.retorno && response.data.retorno.separacao) {
             return response.data.retorno.separacao;
@@ -129,6 +137,7 @@ async function obterDetalhesSeparacao(idSeparacao) {
     }
 }
 
+
 // Função principal para processar separações e gerar etiquetas
 async function processarSeparacoes() {
     const separacoes = await buscarSeparacoes();
@@ -137,20 +146,25 @@ async function processarSeparacoes() {
         return;
     }
 
+
     const todasNotas = []; // Para armazenar todas as notas antes de gerar o PDF
+
 
     for (const separacao of separacoes) {
         const idSeparacao = separacao.id; // Obter o ID da separação
         const nomeCliente = separacao.destinatario; // Nome do cliente atrelado ao endereço de entrega
 
+
         // Obter detalhes da separação usando o ID
         const detalhesSeparacao = await obterDetalhesSeparacao(idSeparacao);
+
 
         if (detalhesSeparacao && detalhesSeparacao.itens && detalhesSeparacao.itens.length > 0) {
             detalhesSeparacao.itens.forEach(item => {
                 console.log('Item encontrado:', item); // Log do item encontrado
                 const quantidade = item.quantidade; // Obter a quantidade do item
                 const nota = criarEtiqueta(nomeCliente, item.codigo); // Usar SKU como código
+
 
                 // Adicionar a nota à lista de acordo com a quantidade
                 for (let i = 0; i < quantidade; i++) {
@@ -162,6 +176,7 @@ async function processarSeparacoes() {
         }
     }
 
+
     // Gerar o PDF somente se houver notas
     if (todasNotas.length > 0) {
         gerarPDF(todasNotas);
@@ -170,5 +185,9 @@ async function processarSeparacoes() {
     }
 }
 
+
 // Executar a função principal
 processarSeparacoes();
+
+
+
