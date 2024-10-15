@@ -1,31 +1,20 @@
 module.exports = {
-  env: {
-    es6: true,
-    node: true,
-  },
-  parserOptions: {
-    ecmaVersion: 2018,
-  },
-  extends: [
-    'eslint:recommended',
-    'google',
-  ],
-  rules: {
-    'no-restricted-globals': ['error', 'name', 'length'],
-    'prefer-arrow-callback': 'error',
-    'quotes': ['error', 'single', { 'allowTemplateLiterals': true }],
-    'object-curly-spacing': ['error', 'always'],
-    'max-len': ['error', { 'code': 100 }],
-    'comma-dangle': ['error', 'always-multiline'],
-  },
-  overrides: [
-    {
-      files: ['**/*.spec.*'],
-      env: {
-        mocha: true,
-      },
-      rules: {},
+    env: {
+        browser: true,
+        es2021: true,
+        node: true
     },
-  ],
-  globals: {},
+    extends: [
+        'eslint:recommended',
+        'google' // Se você estiver usando a configuração do Google
+    ],
+    parserOptions: {
+        ecmaVersion: 12, // Versão do ECMAScript
+        sourceType: 'module'
+    },
+    rules: {
+        'max-len': ['error', 100], // Limite de comprimento da linha
+        'comma-dangle': ['error', 'never'], // Não permitir trailing commas
+        'indent': ['error', 4] // Usar 4 espaços para indentação
+    }
 };
