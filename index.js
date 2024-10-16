@@ -101,7 +101,7 @@ async function processarSeparacoes() {
         if (detalhesSeparacao && detalhesSeparacao.itens && detalhesSeparacao.itens.length > 0) {
             detalhesSeparacao.itens.forEach(item => {
                 console.log('Item encontrado:', item); // Log do item encontrado
-                const quantidade = item.quantidade; // Obter a quantidade do item
+                const quantidade = parseInt(item.quantidade, 10); // Obter a quantidade do item como número
                 const nota = criarEtiqueta(nomeCliente, item.codigo); // Usar SKU como código
 
                 // Adicionar a nota à lista de acordo com a quantidade
@@ -114,7 +114,8 @@ async function processarSeparacoes() {
         }
     }
 
-    // Removemos a parte do PDF
+    // Aqui você pode adicionar a lógica para gerar o PDF ou fazer o que precisar com todas as notas
+    console.log('Todas as notas criadas:', todasNotas); // Logar todas as notas criadas
 }
 
 // Executar a função principal
